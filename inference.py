@@ -3,11 +3,13 @@ Created on Wed Apr 30 09:56:00 2025
 
 @author: Matéo Petitet for OFB/Parc Naturel Marin de Martinique
 """
+# -*- coding: utf-8 -*-
 import os
 import torch
 from PIL import Image, ImageDraw, ImageFont
-from rfdetr import  RFDETRBase  # Assurez-vous que le package rf-detr est bien installé
-# -*- coding: utf-8 -*-
+from rfdetr import  RFDETRBase
+import argparse
+
 
 def draw_boxes(image, boxes, confidences, color="red"):
     draw = ImageDraw.Draw(image)
@@ -61,32 +63,45 @@ def decoupe(image, img_name, boxes, path):
         crop_image.save(os.path.join(save_path, save_name))
         crp+=1
 
-#init
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-photo_dir = "donnees_test/photos"  # chemin vers les photos
-poids = "donnees_test/checkpoints/checkpoint0059.pth"
-model = RFDETRBase(pretrain_weights=poids)
-print("Device utilisé :", device)
-print("Modèle utilisé :", poids)
 
+if __name__ == '__main__':
+#Parser
+    parser = argparse.ArgumentParser(description='Inference on an existing picture with a specified model.')
+    parser.add_argument('--img_path', type=str, help='Path to the pictures directory')
+    parser.add_argument('--model_path', type=str, help='Path to the model checkpoint file')
+    parser.add_argument('--crop_mode', type=int, choices=[0, 1], default=1, help='1 : extract the detections from the original picture (default), 0 to not do it.')
 
-files = os.listdir(photo_dir)    # Assume that data structure is folder>files
+    args = parser.parse_args()
 
-#dossier de sauvegarde des photos annotées
-save_path = os.path.join(photo_dir, "inference")
-if not os.path.exists(save_path):
-    os.mkdir(save_path)
+    #init
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    photo_dir = os.path.abspath(args.img_path)  # chemin vers les photos
+    poids = os.path.abspath (args.model_path)
+    model = RFDETRBase(pretrain_weights=poids)
+    print("Device utilisé :", device)
+    print("Modèle utilisé :", poids)
+    
+    files = os.listdir(photo_dir)    # Assume that data structure is folder>files
+    
+    #dossier de sauvegarde des photos annotées
+    save_path = os.path.join(photo_dir, "inference")
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+    
+    for image in files:
+        image_path = os.path.join(photo_dir, image)
+        if os.path.isdir(image_path):
+            continue        #rien ne sert d'essayer d'inférer un dossier
+        image_inferee = Image.open(image_path)
+        detection_coord, detection_scores = inference(image_path, 0.3)
+        detections_image = image_inferee.copy()
+        detections_image = draw_boxes(detections_image, detection_coord, detection_scores, color="red")
+        image_name, ext = os.path.splitext(image)
+        save_name = f"{image_name}_inferee.png"
+        detections_image.save(os.path.join(save_path, save_name))
+        if args.crop_mode==1:
+            decoupe(image_inferee, image_name, detection_coord, save_path)
 
-for image in files:
-    image_path = os.path.join(photo_dir, image)
-    if os.path.isdir(image_path):
-        continue        #rien ne sert d'essayer d'inférer un dossier
-    image_inferee = Image.open(image_path)
-    detection_coord, detection_scores = inference(image_path, 0.3)
-    detections_image = image_inferee.copy()
-    detections_image = draw_boxes(detections_image, detection_coord, detection_scores, color="red")
-    image_name, ext = os.path.splitext(image)
-    save_name = f"{image_name}_inferee.png"
-    detections_image.save(os.path.join(save_path, save_name))
-    decoupe(image_inferee, image_name, detection_coord, save_path)
+    print(f"Results saved in {save_path}")
+
 
