@@ -8,17 +8,11 @@ import torch
 from PIL import Image, ImageDraw, ImageFont
 from rfdetr import  RFDETRBase  # Assurez-vous que le package rf-detr est bien installé
 # -*- coding: utf-8 -*-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-photo_dir = "donnees_test/photos"  # chemin vers les photos
-poids = "donnees_test/checkpoints/checkpoint0059.pth"
-model = RFDETRBase(pretrain_weights=poids)
-print("Device utilisé :", device)
-print("Modèle utilisé :", poids)
 
 def draw_boxes(image, boxes, confidences, color="red"):
     draw = ImageDraw.Draw(image)
     w, h = image.size
-    
+
     font_size = max(16, w//50)
     box_thick = max(2, w//200)
     try:
@@ -45,18 +39,54 @@ def draw_boxes(image, boxes, confidences, color="red"):
         # fond et texte du label
         draw.rectangle([x1, y1 - text_height, x1 + text_width, y1], fill=color)
         draw.text((x1, y1 - text_height), label, fill="white", font=font)
-
     return image
+
+def inference(img, seuil):
+    detections = model.predict(img, threshold=seuil)
+    detect_coord = detections.xyxy
+    detect_scores = detections.confidence
+    return detect_coord, detect_scores
+
+def decoupe(image, img_name, boxes, path):
+    save_path = os.path.join(path, img_name)
+    os.mkdir(save_path)
+    w, h = image.size
+    crp = 0
+    for box in boxes:
+        x1, y1, x2, y2 = box
+        x1, y1 = max(0, x1), max(0, y1)         #on évite de dépasser négativement
+        x2, y2 = min(w, x2,), min(h, y2)        #on évite de dépasser positivement
+        crop_image = image.copy().crop((x1, y1, x2, y2))
+        save_name=f"{img_name}_crop_{crp}.jpg"
+        crop_image.save(os.path.join(save_path, save_name))
+        crp+=1
+
+#init
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+photo_dir = "donnees_test/photos"  # chemin vers les photos
+poids = "donnees_test/checkpoints/checkpoint0059.pth"
+model = RFDETRBase(pretrain_weights=poids)
+print("Device utilisé :", device)
+print("Modèle utilisé :", poids)
+
 
 files = os.listdir(photo_dir)    # Assume that data structure is folder>files
 
+#dossier de sauvegarde des photos annotées
+save_path = os.path.join(photo_dir, "inference")
+if not os.path.exists(save_path):
+    os.mkdir(save_path)
+
 for image in files:
     image_path = os.path.join(photo_dir, image)
+    if os.path.isdir(image_path):
+        continue        #rien ne sert d'essayer d'inférer un dossier
     image_inferee = Image.open(image_path)
-    detections = model.predict(image_inferee, threshold=0.3)
-    detection_coord = detections.xyxy
-    detection_scores = detections.confidence
+    detection_coord, detection_scores = inference(image_path, 0.3)
     detections_image = image_inferee.copy()
     detections_image = draw_boxes(detections_image, detection_coord, detection_scores, color="red")
-    detections_image.save(f"donnees_test/photos/{image}_inferee.png")
+    image_name, ext = os.path.splitext(image)
+    save_name = f"{image_name}_inferee.png"
+    detections_image.save(os.path.join(save_path, save_name))
+    decoupe(image_inferee, image_name, detection_coord, save_path)
 
