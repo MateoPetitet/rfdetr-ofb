@@ -53,15 +53,13 @@ def decoupe(image, img_name, boxes, path):
     save_path = os.path.join(path, img_name)
     os.mkdir(save_path)
     w, h = image.size
-    crp = 0
     for box in boxes:
         x1, y1, x2, y2 = box
-        x1, y1 = max(0, x1), max(0, y1)         #on évite de dépasser négativement
-        x2, y2 = min(w, x2,), min(h, y2)        #on évite de dépasser positivement
+        x1, y1 = int(max(0, x1)), int(max(0, y1))         #on évite de dépasser négativement
+        x2, y2 = int(min(w, x2,)), int(min(h, y2))        #on évite de dépasser positivement
         crop_image = image.copy().crop((x1, y1, x2, y2))
-        save_name=f"{img_name}_crop_{crp}.jpg"
+        save_name=f"{x1}-{y1}-{x2}-{y2}.jpg"
         crop_image.save(os.path.join(save_path, save_name))
-        crp+=1
 
 
 if __name__ == '__main__':
