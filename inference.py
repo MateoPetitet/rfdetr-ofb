@@ -67,6 +67,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference on an existing picture with a specified model.')
     parser.add_argument('--img_path', type=str, help='Path to the pictures directory')
     parser.add_argument('--model_path', type=str, help='Path to the model checkpoint file')
+    parser.add_argument('--threshold', type=float, default=0.3, help='Threshold value for inference ; default : 0.3')
+    parser.add_argument('--visualize', type=int, choices=[0, 1], default=1, help='1 : save the original pictures with the detection (default), 0 not to do it')
     parser.add_argument('--crop_mode', type=int, choices=[0, 1], default=1, help='1 : extract the detections from the original picture (default), 0 to not do it.')
 
     args = parser.parse_args()
@@ -91,12 +93,17 @@ if __name__ == '__main__':
         if os.path.isdir(image_path):
             continue        #rien ne sert d'essayer d'inférer un dossier
         image_inferee = Image.open(image_path)
-        detection_coord, detection_scores = inference(image_path, 0.3)
-        detections_image = image_inferee.copy()
-        detections_image = draw_boxes(detections_image, detection_coord, detection_scores, color="red")
-        image_name, ext = os.path.splitext(image)
-        save_name = f"{image_name}_inferee.png"
-        detections_image.save(os.path.join(save_path, save_name))
+        seuil=args.threshold
+        if seuil<0 or seuil>1:
+            print ('Please use a threshold between 0 and 1.')
+            break
+        detection_coord, detection_scores = inference(image_path, seuil)
+        if args.visualize==1:
+            detections_image = image_inferee.copy()
+            detections_image = draw_boxes(detections_image, detection_coord, detection_scores, color="red")
+            image_name, ext = os.path.splitext(image)
+            save_name = f"{image_name}_inferee.png"
+            detections_image.save(os.path.join(save_path, save_name))
         if args.crop_mode==1:
             decoupe(image_inferee, image_name, detection_coord, save_path)
 
