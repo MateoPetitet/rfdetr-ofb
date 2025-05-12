@@ -65,11 +65,11 @@ def decoupe(image, img_name, boxes, path):
 if __name__ == '__main__':
 #Parser
     parser = argparse.ArgumentParser(description='Inference on an existing picture with a specified model.')
-    parser.add_argument('--img_path', type=str, help='Path to the pictures directory')
-    parser.add_argument('--model_path', type=str, help='Path to the model checkpoint file')
-    parser.add_argument('--threshold', type=float, default=0.3, help='Threshold value for inference ; default : 0.3')
-    parser.add_argument('--visualize', type=int, choices=[0, 1], default=1, help='1 : save the original pictures with the detection (default), 0 not to do it')
-    parser.add_argument('--crop_mode', type=int, choices=[0, 1], default=1, help='1 : extract the detections from the original picture (default), 0 to not do it.')
+    parser.add_argument('--img_path', '--i',  type=str, help='Path to the pictures directory')
+    parser.add_argument('--model_path', '--m', type=str, help='Path to the model checkpoint file')
+    parser.add_argument('--threshold', '--t',  type=float, default=0.3, help='Threshold value for inference ; default : 0.3')
+    parser.add_argument('--visualize', '--v', type=int, choices=[0, 1], default=1, help='1 : save the original pictures with the detection (default), 0 not to do it')
+    parser.add_argument('--crop_mode', '--c', type=int, choices=[0, 1], default=1, help='1 : extract the detections from the original picture (default), 0 to not do it.')
 
     args = parser.parse_args()
 
@@ -98,6 +98,8 @@ if __name__ == '__main__':
             print ('Please use a threshold between 0 and 1.')
             break
         detection_coord, detection_scores = inference(image_path, seuil)
+        if len(detection_scores)==0:    #pas de detection
+            continue    #rien ne sert de créer un dossier vide
         image_name, ext = os.path.splitext(image)
         if args.visualize==1:
             detections_image = image_inferee.copy()
