@@ -98,10 +98,10 @@ if __name__ == '__main__':
             print ('Please use a threshold between 0 and 1.')
             break
         detection_coord, detection_scores = inference(image_path, seuil)
+        image_name, ext = os.path.splitext(image)
         if args.visualize==1:
             detections_image = image_inferee.copy()
             detections_image = draw_boxes(detections_image, detection_coord, detection_scores, color="red")
-            image_name, ext = os.path.splitext(image)
             save_name = f"{image_name}_inferee.png"
             detections_image.save(os.path.join(save_path, save_name))
         if args.crop_mode==1:
