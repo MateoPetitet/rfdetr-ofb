@@ -7,7 +7,7 @@ Created on Wed Apr 30 09:56:00 2025
 import os
 import torch
 from PIL import Image, ImageDraw, ImageFont
-from rfdetr import  RFDETRBase
+from rfdetr import  RFDETRBase, RFDETRLarge
 import argparse
 
 
@@ -68,6 +68,7 @@ if __name__ == '__main__':
     parser.add_argument('--img_path', '--i',  type=str, help='Path to the pictures directory')
     parser.add_argument('--model_path', '--m', type=str, help='Path to the model checkpoint file')
     parser.add_argument('--threshold', '--t',  type=float, default=0.3, help='Threshold value for inference ; default : 0.3')
+    parser.add_argument('--size', '--s', type=int, choices=[0, 1], default=0, help='Model type : base (0, default) or large(1)')
     parser.add_argument('--visualize', '--v', type=int, choices=[0, 1], default=1, help='1 : save the original pictures with the detection (default), 0 not to do it')
     parser.add_argument('--crop_mode', '--c', type=int, choices=[0, 1], default=1, help='1 : extract the detections from the original picture (default), 0 to not do it.')
 
@@ -77,7 +78,11 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     photo_dir = os.path.abspath(args.img_path)  # chemin vers les photos
     poids = os.path.abspath (args.model_path)
-    model = RFDETRBase(pretrain_weights=poids)
+    if args.size == 0:
+        model = RFDETRBase(pretrain_weights=poids)
+        ok=1
+    elif args.size == 1:
+        model = RFDETRLarge(pretrain_weights=poids)
     print("Device utilisé :", device)
     print("Modèle utilisé :", poids)
     
@@ -87,7 +92,7 @@ if __name__ == '__main__':
     save_path = os.path.join(photo_dir, "inference")
     if not os.path.exists(save_path):
         os.mkdir(save_path)
-    
+
     for image in files:
         image_path = os.path.join(photo_dir, image)
         if os.path.isdir(image_path):

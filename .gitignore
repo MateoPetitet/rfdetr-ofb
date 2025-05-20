@@ -6,3 +6,5 @@ essai.py
 Archives
 *.pth
 donnees_test/photos/inference/
+donnees_test/photos/inference_connu
+
