@@ -38,11 +38,12 @@ if __name__ == '__main__' :
         model = RFDETRBase(pretrained=True)
 
     resume_dir = args.resume_path
-    resume = os.listdir(resume_dir)
-    if resume==[]:
-        cp_resume=False
+    if os.path.isdir(resume_dir):
+        resume = os.listdir(resume_dir)
+        if resume!=[]:
+            cp_resume=os.path.join(resume_dir, resume[0])
     else:
-        cp_resume=os.path.join(resume_dir, resume[0])
+        cp_resume=False
 
     num_epochs = args.epochs
 
