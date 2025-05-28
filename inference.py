@@ -82,7 +82,7 @@ if __name__ == '__main__':
         model = RFDETRBase(pretrain_weights=poids)
         ok=1
     elif args.size == 1:
-        model = RFDETRLarge(pretrain_weights=poids)
+        model = RFDETRLarge(resolution=1008, num_queries=300, num_select=300, dec_layers=6, dropout=0.1, drop_path=0.1, pretrain_weights=poids)
     print("Device utilisé :", device)
     print("Modèle utilisé :", poids)
     

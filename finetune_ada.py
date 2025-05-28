@@ -16,21 +16,21 @@ if __name__ == '__main__' :
     parser = argparse.ArgumentParser(description='RF-DETR fine-tuning.')
     parser.add_argument('--path', '--p', type=str, default='data/', help='Path to the data directory ; default : /data/')
     parser.add_argument('--output', '--o', type=str, default='output/', help='Path to the output directory ; default : /output/')
-    parser.add_argument('--model_type', '--m', type=int, choices =['base','Base','large','Large'], default='large', help='Base RF-DETR model used ; default : large')
+    parser.add_argument('--model_type', '--m', type=str, choices =['base','Base','large','Large'], default='large', help='Base RF-DETR model used ; default : large')
     parser.add_argument('--epochs', '--e', type=int, default=500, help='Numbers of epochs for training ; default : 500')
     parser.add_argument('--learning_rate', '--lr', type=float, default=5e-5, help='Learning rate ; default : 5e-5 (big images, small dataset')
     parser.add_argument('--checkpoint_interval', '--ci', type=int, default=15, help='Number of epochs between each checkpoint ; default : 15')
     parser.add_argument('--resume_path', '--r', type=str, default='checkpoint/', help='Path to the folder containing the checkpoint to resume training from ; default : /checkpoint/')
 
     args = parser.parse_args()
- 
+
     # Vérification de la disponibilité du GPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Device utilisé :', device)
 
-    data_dir = os.join(args.path)
+    data_dir = os.path.join(args.path)
 
-    output_path = os.join(args.output)
+    output_path = os.path.join(args.output)
 
     if args.model_type == 'large' or args.model_type == 'Large':
         model = RFDETRLarge(pretrained=True)
